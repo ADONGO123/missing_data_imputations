@@ -1,0 +1,63 @@
+---
+title: "Imputing Missing Values: Random Forest vs K-Nearest Neighbors"
+author: Robert Adongo  
+date: "June 7, 2025"
+output:
+  # cleanrmd::html_document_clean:
+  #   theme: NULL
+  #   toc: true
+  #   toc_float: true
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    df_print: paged
+    css: "custom.css"
+bibliography: references.bib
+csl: apa.csl
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+## Motivation and Goals 
+Missing data poses a significant barrier to effective analysis in many applied research domains. The K-Nearest Neighbors (KNN) is a common imputation method that is simple and widely used [@troyanskaya2001missing]. For this method, we will use the `fill.KNNimpute` function (in the `filling` package) [@troyanskaya2001missing]. 
+
+Random Forest (RF), a non-parametric ensemble method, offers an attractive alternative by naturally handling both continuous and categorical variables, modeling non-linear effects, and requiring minimal tuning [@stekhoven2012missforest]. For this method, we will use the `missRanger` function (in the `missRanger` package) [@troyanskaya2001missing; @vanbuuren2011mice; @stekhoven2012missforest; @wright2016ranger].
+
+The goal of this document is to provide a theoretical background on the two methods mentioned above, apply them to datasets with different structures and missingness patterns, and compare their performance.
+
+
+## The `fill.KNNimpute` Function
+`fill.KNNimpute(A, k = ceiling(nrow(A)/2))`
+
+## The `missRanger` Function
+`missRanger(data, formula = . ~ ., pmm.k = 0L, num.trees = 500, mtry = NULL,
+  min.node.size = NULL,
+  min.bucket = NULL,
+  max.depth = NULL,
+  replace = TRUE,
+  sample.fraction = if (replace) 1 else 0.632,
+  case.weights = NULL,
+  num.threads = NULL,
+  save.memory = FALSE,
+  maxiter = 10L,
+  seed = NULL,
+  verbose = 1,
+  returnOOB = FALSE,
+  data_only = !keep_forests,
+  keep_forests = FALSE,
+  ...
+)`
+
+# Mathematical Setup
+
+# Example 1; Continuous Variables only
+## Over
+# References
