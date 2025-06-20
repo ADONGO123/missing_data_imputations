@@ -2776,38 +2776,213 @@ K-Nearest Neighbors</h1>
 <h2><span class="header-section-number">1.1</span> Motivation and
 Goals</h2>
 <p>Missing data poses a significant barrier to effective analysis in
-many applied research domains. The K-Nearest Neighbors (KNN) is a common
-imputation method that is simple and widely used <span class="citation">(<a href="#ref-troyanskaya2001missing">Troyanskaya et
-al., 2001</a>)</span>. For this method, we will use the
-<code>fill.KNNimpute</code> function (in the <code>filling</code>
-package) <span class="citation">(<a href="#ref-troyanskaya2001missing">Troyanskaya et al.,
-2001</a>)</span>.</p>
-<p>Random Forest (RF), a non-parametric ensemble method, offers an
-attractive alternative by naturally handling both continuous and
-categorical variables, modeling non-linear effects, and requiring
-minimal tuning <span class="citation">(<a href="#ref-stekhoven2012missforest">Stekhoven &amp; Bühlmann,
-2012</a>)</span>. For this method, we will use the
-<code>missRanger</code> function (in the <code>missRanger</code>
-package) <span class="citation">(<a href="#ref-vanbuuren2011mice">Buuren
-&amp; Groothuis-Oudshoorn, 2011</a>; <a href="#ref-stekhoven2012missforest">Stekhoven &amp; Bühlmann, 2012</a>;
+many applied research domains. The K-Nearest Neighbors (KNN) method is a
+simple and widely used imputation technique <span class="citation">(<a href="#ref-troyanskaya2001missing">Troyanskaya et al., 2001</a>)</span>.
+In this project, we implement the <code>kNN</code> function from the
+<code>VIM</code> package, which is based on a variation of the Gower
+distance. This approach is suitable for handling numerical, categorical,
+ordered, and semi-continuous variables <span class="citation">(<a href="#ref-kowarik2016imputation">Kowarik &amp; Templ,
+2016</a>)</span>.</p>
+<p>We also utilize Random Forest (RF), a non-parametric ensemble method,
+for imputation. Specifically, we employ the <code>missForest</code>
+function from the <code>missForestPredict</code> package <span class="citation">(<a href="#ref-vanbuuren2011mice">Buuren &amp;
+Groothuis-Oudshoorn, 2011</a>; <a href="#ref-stekhoven2012missforest">Stekhoven &amp; Bühlmann, 2012</a>;
 <a href="#ref-troyanskaya2001missing">Troyanskaya et al., 2001</a>; <a href="#ref-wright2016ranger">Wright &amp; Ziegler, 2016</a>)</span>.</p>
-<p>The goal of this document is to provide a theoretical background on
-the two methods mentioned above, apply them to datasets with different
-structures and missingness patterns, and compare their performance.</p>
+<p>The goal of this document is to provide a theoretical background for
+the two imputation methods mentioned above, apply them to datasets with
+different structures and missingness patterns, and compare their
+performance.</p>
 </div>
-<div id="the-fill.knnimpute-function" class="section level2" number="1.2">
-<h2><span class="header-section-number">1.2</span> The
-<code>fill.KNNimpute</code> Function</h2>
-<p><code>fill.KNNimpute(A, k = ceiling(nrow(A)/2))</code></p>
+<div id="the-knn-function" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> The <code>KNN</code>
+Function</h2>
+<p><code>kNN(   data,   variable = colnames(data),   metric = NULL,   k = 5,   dist_var = colnames(data),   weights = NULL,   numFun = median,   catFun = maxCat,   makeNA = NULL,   NAcond = NULL,   impNA = TRUE,   donorcond = NULL,   mixed = vector(),   mixed.constant = NULL,   trace = FALSE,   imp_var = TRUE,   imp_suffix = &quot;imp&quot;,   addRF = FALSE,   onlyRF = FALSE,   addRandom = FALSE,   useImputedDist = TRUE,   weightDist = FALSE,   methodStand = &quot;range&quot;,   ordFun = medianSamp )</code></p>
 </div>
-<div id="the-missranger-function" class="section level2" number="1.3">
+<div id="the-missforest-function" class="section level2" number="1.3">
 <h2><span class="header-section-number">1.3</span> The
-<code>missRanger</code> Function</h2>
-<p><code>missRanger(data, formula = . ~ ., pmm.k = 0L, num.trees = 500, mtry = NULL,   min.node.size = NULL,   min.bucket = NULL,   max.depth = NULL,   replace = TRUE,   sample.fraction = if (replace) 1 else 0.632,   case.weights = NULL,   num.threads = NULL,   save.memory = FALSE,   maxiter = 10L,   seed = NULL,   verbose = 1,   returnOOB = FALSE,   data_only = !keep_forests,   keep_forests = FALSE,   ... )</code></p>
+<code>missForest</code> Function</h2>
+<p><code>missForest(   xmis,   maxiter = 10,   fixed_maxiter = FALSE,   var_weights = NULL,   decreasing = FALSE,   initialization = &quot;mean/mode&quot;,   x_init = NULL,   class.weights = NULL,   return_integer_as_integer = FALSE,   save_models = TRUE,   predictor_matrix = NULL,   proportion_usable_cases = c(1, 0),   verbose = TRUE,   convergence_error = &quot;OOB&quot;,   ... )</code></p>
 </div>
 </div>
 <div id="mathematical-setup" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Mathematical Setup</h1>
+<div id="k-nearest-neighbor-imputation" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> K Nearest Neighbor
+Imputation</h2>
+<div id="model-form" class="section level3" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Model Form</h3>
+<p>The mathematical setup presented in this section is based on the work
+by Kowarik and Templ <span class="citation">(<a href="#ref-kowarik2016imputation">Kowarik &amp; Templ, 2016</a>)</span>,
+who provide a comprehensive formulation of k-nearest neighbor imputation
+as implemented in the <code>VIM</code> package.</p>
+<p>Suppose we observe a data set with missing values. Let <span class="math inline">\(\mathbf{x}_i = (x_{i1}, x_{i2}, \dots,
+x_{ip})\)</span> represent the observed values for observation <span class="math inline">\(i\)</span> across <span class="math inline">\(p\)</span> variables, where some entries in <span class="math inline">\(\mathbf{x}_i\)</span> may be missing.</p>
+<p>The goal of k-nearest neighbor (kNN) imputation is to fill in the
+missing entries of <span class="math inline">\(\mathbf{x}_i\)</span>
+using information from the <strong>k most similar (complete)
+observations</strong>.</p>
+<p>Similarity between two observations <span class="math inline">\(\mathbf{x}_i\)</span> and <span class="math inline">\(\mathbf{x}_j\)</span> is measured by a
+<strong>generalized Gower distance</strong>, which is defined to
+accommodate numerical, categorical, ordinal, binary, and semi-continuous
+variables <span class="citation">(<a href="#ref-gower1971general">Gower,
+1971</a>)</span>.</p>
+</div>
+<div id="generalized-gower-distance" class="section level3" number="2.1.2">
+<h3><span class="header-section-number">2.1.2</span> Generalized Gower
+Distance</h3>
+<p>Let <span class="math inline">\(d_{ij}\)</span> denote the distance
+between observations <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. Then:</p>
+<p><span class="math display">\[
+d_{ij} = \frac{\sum_{k=1}^p w_k \delta_{ijk}}{\sum_{k=1}^p w_k}
+\]</span></p>
+<p>where: <span class="math inline">\(w_k \geq 0\)</span> is the weight
+assigned to variable <span class="math inline">\(k\)</span>, <span class="math inline">\(\delta_{ijk} \in [0, 1]\)</span> measures the
+contribution of variable <span class="math inline">\(k\)</span> to the
+overall distance between <span class="math inline">\(i\)</span> and
+<span class="math inline">\(j\)</span>.</p>
+<p>The form of <span class="math inline">\(\delta_{ijk}\)</span> depends
+on the type of variable <span class="math inline">\(k\)</span>:</p>
+<ul>
+<li><strong>Continuous variables</strong>:</li>
+</ul>
+<p><span class="math display">\[
+\delta_{ijk} = \frac{|x_{ik} - x_{jk}|}{r_k}, \quad \text{where } r_k =
+\max(x_{\cdot k}) - \min(x_{\cdot k})
+\]</span></p>
+<ul>
+<li><strong>Ordinal variables</strong> (converted to integers):</li>
+</ul>
+<p><span class="math display">\[
+\delta_{ijk} = \frac{|x_{ik} - x_{jk}|}{r_k}
+\]</span></p>
+<ul>
+<li><strong>Nominal or binary variables</strong>:</li>
+</ul>
+<p><span class="math display">\[
+\delta_{ijk} =
+\begin{cases}
+0, &amp; \text{if } x_{ik} = x_{jk} \\
+1, &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<ul>
+<li><strong>Semi-continuous variables</strong> (e.g., income with many
+zeros):</li>
+</ul>
+<p><span class="math display">\[
+\delta_{ijk} =
+\begin{cases}
+0, &amp; \text{if } x_{ik} = s_k \text{ and } x_{jk} = s_k \\
+1, &amp; \text{if exactly one of } x_{ik}, x_{jk} \text{ equals } s_k \\
+\frac{|x_{ik} - x_{jk}|}{r_k}, &amp; \text{if } x_{ik} \neq s_k \text{
+and } x_{jk} \neq s_k
+\end{cases}
+\]</span></p>
+<p>Here, <span class="math inline">\(s_k\)</span> is the “special” value
+(typically zero) where the variable has mass.</p>
+</div>
+<div id="aggregation-rule" class="section level3" number="2.1.3">
+<h3><span class="header-section-number">2.1.3</span> Aggregation
+Rule</h3>
+<p>Once the distances <span class="math inline">\(d_{ij}\)</span> are
+computed, the <strong>k nearest neighbors</strong> of observation <span class="math inline">\(i\)</span> (with complete data) are identified.
+The missing entries of <span class="math inline">\(\mathbf{x}_i\)</span>
+are then imputed using an aggregation of the corresponding values from
+its neighbors:</p>
+<ul>
+<li>For <strong>continuous variables</strong>:</li>
+</ul>
+<p><span class="math display">\[
+\hat{x}_{ik} = \text{median}\left\{x_{jk} : j \in \mathcal{N}_k(i)
+\right\}
+\]</span></p>
+<ul>
+<li>For <strong>categorical variables</strong>:</li>
+</ul>
+<p><span class="math display">\[
+\hat{x}_{ik} = \text{mode}\left\{x_{jk} : j \in \mathcal{N}_k(i)
+\right\}
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{N}_k(i)\)</span> denotes
+the set of indices of the k nearest neighbors for observation <span class="math inline">\(i\)</span> (based on distance in selected
+variables).</p>
+</div>
+<div id="tuning-parameter-k" class="section level3" number="2.1.4">
+<h3><span class="header-section-number">2.1.4</span> Tuning Parameter
+<span class="math inline">\(k\)</span></h3>
+<p>The parameter <span class="math inline">\(k \in \mathbb{N}\)</span>
+controls the number of nearest neighbors used in imputation. Small
+values of <span class="math inline">\(k\)</span> may lead to high
+variance; large values may oversmooth or dilute local structure.</p>
+</div>
+</div>
+<div id="random-forest-imputation" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Random Forest
+Imputation</h2>
+<p>The mathematical setup presented in this section is based on the work
+of Stekhoven and Bühlmann <span class="citation">(<a href="#ref-stekhoven2012missforest">Stekhoven &amp; Bühlmann,
+2012</a>)</span>, who introduced the missForest algorithm for
+non-parametric imputation of mixed-type data using Random Forests.</p>
+<div id="data-structure-and-objective" class="section level3" number="2.2.1">
+<h3><span class="header-section-number">2.2.1</span> Data Structure and
+Objective</h3>
+<p>Let <span class="math inline">\(\mathbf{X} = (x_{ij}) \in
+\mathbb{R}^{n \times p}\)</span> be a data matrix with <span class="math inline">\(n\)</span> observations and <span class="math inline">\(p\)</span> variables. Denote by <span class="math inline">\(\mathcal{M}_j \subseteq \{1, \dots, n\}\)</span>
+the set of indices with missing values in variable <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathcal{O}_j = \{1, \dots, n\} \setminus
+\mathcal{M}_j\)</span> be the observed entries for that variable.</p>
+<p>The goal is to impute all missing values in <span class="math inline">\(\mathbf{X}\)</span> using a non-parametric model
+without making distributional assumptions.</p>
+</div>
+<div id="iterative-imputation-scheme" class="section level3" number="2.2.2">
+<h3><span class="header-section-number">2.2.2</span> Iterative
+Imputation Scheme</h3>
+<p>The missForest algorithm proceeds iteratively. Let <span class="math inline">\(\mathbf{X}^{(0)}\)</span> be the initial matrix
+with missing values imputed using mean imputation (numerical) or mode
+imputation (categorical). For iteration <span class="math inline">\(t =
+1, 2, \dots\)</span>, the procedure is:</p>
+<ol style="list-style-type: decimal">
+<li>Define a variable-wise ordering such that variables with fewer
+missing values are imputed first.</li>
+<li>For each variable <span class="math inline">\(j \in \{1, \dots,
+p\}\)</span>:
+<ul>
+<li>Let <span class="math inline">\(\mathbf{Y}_{\mathcal{O}_j} =
+\{x_{ij} : i \in \mathcal{O}_j\}\)</span> be the observed
+responses.</li>
+<li>Let <span class="math inline">\(\mathbf{X}_{\mathcal{O}_j,
+-j}^{(t-1)}\)</span> be the corresponding predictors (excluding <span class="math inline">\(j\)</span>) for observed rows.</li>
+<li>Train a Random Forest regression or classification model <span class="math inline">\(f_j^{(t)}\)</span> using: <span class="math display">\[
+f_j^{(t)} : \mathbf{X}_{\mathcal{O}_j, -j}^{(t-1)} \rightarrow
+\mathbf{Y}_{\mathcal{O}_j}
+\]</span></li>
+<li>Predict missing values <span class="math inline">\(\hat{x}_{ij}^{(t)} = f_j^{(t)}(\mathbf{X}_{i,
+-j}^{(t-1)})\)</span> for <span class="math inline">\(i \in
+\mathcal{M}_j\)</span>.</li>
+</ul></li>
+<li>Repeat the process for all variables <span class="math inline">\(j =
+1, \dots, p\)</span>.</li>
+</ol>
+<p>The updated matrix <span class="math inline">\(\mathbf{X}^{(t)}\)</span> combines observed values
+with new predictions for all variables.</p>
+</div>
+<div id="convergence-and-stopping" class="section level3" number="2.2.3">
+<h3><span class="header-section-number">2.2.3</span> Convergence and
+Stopping</h3>
+<p>The iterations continue until a stopping criterion is met, such as: -
+No substantial change in imputed values between <span class="math inline">\(\mathbf{X}^{(t)}\)</span> and <span class="math inline">\(\mathbf{X}^{(t-1)}\)</span>, - Or a fixed maximum
+number of iterations.</p>
+<p>The normalized root mean squared error (NRMSE) or proportion of
+falsely classified entries (PFC) can be used to assess convergence and
+performance.</p>
+</div>
+</div>
+</div>
+<div id="example-1-continuous-variables-only" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Example 1; Continuous
+Variables only</h1>
+<div id="over" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Over</h2>
+</div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>
@@ -2816,6 +2991,14 @@ structures and missingness patterns, and compare their performance.</p>
 Buuren, S. van, &amp; Groothuis-Oudshoorn, K. (2011). Mice: Multivariate
 imputation by chained equations in r. <em>Journal of Statistical
 Software</em>, <em>45</em>(3), 1–67. <a href="http://www.jstatsoft.org/v45/i03/">http://www.jstatsoft.org/v45/i03/</a>
+</div>
+<div id="ref-gower1971general" class="csl-entry">
+Gower, J. C. (1971). A general coefficient of similarity and some of its
+properties. <em>Biometrics</em>, 857–871.
+</div>
+<div id="ref-kowarik2016imputation" class="csl-entry">
+Kowarik, A., &amp; Templ, M. (2016). Imputation with the r package VIM.
+<em>Journal of Statistical Software</em>, <em>74</em>, 1–16.
 </div>
 <div id="ref-stekhoven2012missforest" class="csl-entry">
 Stekhoven, D. J., &amp; Bühlmann, P. (2012). MissForest—non-parametric
