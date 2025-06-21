@@ -246,4 +246,13 @@ This is computed only over entries that were originally missing. A lower NRMSE i
 
 # Applications 
 ## Continuous Variables only
+
+```{r}
+library(readr)
+data1 <- read.csv("Datasets/Student_Habits.csv") #reading data
+data1 <- data1[, -c(1,3,7,10,12,13,15)] #removing all categorical variables
+
+
+```
+
 # References
