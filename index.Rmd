@@ -165,40 +165,85 @@ The parameter \( k \in \mathbb{N} \) controls the number of nearest neighbors us
 
 ## Random Forest Imputation
 
-The mathematical setup presented in this section is based on the work of Stekhoven and Bühlmann [@stekhoven2012missforest], who introduced the missForest algorithm for non-parametric imputation of mixed-type data using Random Forests.
+The Random Forest-based imputation approach used in this study is based on the missForest algorithm introduced by Stekhoven and Bühlmann [@stekhoven2012missforest]. This method uses iterative, variable-wise Random Forest models to estimate missing entries in a mixed-type data matrix without relying on parametric assumptions.
+
+---
 
 ### Data Structure and Objective
 
-Let \( \mathbf{X} = (x_{ij}) \in \mathbb{R}^{n \times p} \) be a data matrix with \( n \) observations and \( p \) variables. Denote by \( \mathcal{M}_j \subseteq \{1, \dots, n\} \) the set of indices with missing values in variable \( j \), and let \( \mathcal{O}_j = \{1, \dots, n\} \setminus \mathcal{M}_j \) be the observed entries for that variable.
+Let \( \mathbf{X} = (x_{ij}) \in \mathbb{R}^{n \times p} \) denote a data matrix with \( n \) observations and \( p \) variables. Some entries in \( \mathbf{X} \) are missing.
 
-The goal is to impute all missing values in \( \mathbf{X} \) using a non-parametric model without making distributional assumptions.
+For each variable \( j \in \{1, \dots, p\} \), define
+\( \mathcal{M}_j = \{ i \in \{1, \dots, n\} : x_{ij} \text{ is missing} \} \) — the indices with missing entries,
+and \( \mathcal{O}_j = \{1, \dots, n\} \setminus \mathcal{M}_j \) — the indices with observed entries.
+
+The objective is to impute all missing values in \( \mathbf{X} \) using an iterative, non-parametric regression/classification scheme based on Random Forests.
+
+---
+
+### Initialization
+
+Let \( \mathbf{X}^{(0)} \) be the initial imputed matrix, constructed by applying:
+- Mean imputation for continuous variables,
+- Mode imputation for categorical variables.
+
+This serves as the starting point for the iterative procedure.
+
+---
 
 ### Iterative Imputation Scheme
 
-The missForest algorithm proceeds iteratively. Let \( \mathbf{X}^{(0)} \) be the initial matrix with missing values imputed using mean imputation (numerical) or mode imputation (categorical). For iteration \( t = 1, 2, \dots \), the procedure is:
+For each iteration \( t = 1, 2, \dots \), the following steps are performed:
 
-1. Define a variable-wise ordering such that variables with fewer missing values are imputed first.
+1. Determine a variable ordering from least to most missing values.
 2. For each variable \( j \in \{1, \dots, p\} \):
-   - Let \( \mathbf{Y}_{\mathcal{O}_j} = \{x_{ij} : i \in \mathcal{O}_j\} \) be the observed responses.
-   - Let \( \mathbf{X}_{\mathcal{O}_j, -j}^{(t-1)} \) be the corresponding predictors (excluding \( j \)) for observed rows.
-   - Train a Random Forest regression or classification model \( f_j^{(t)} \) using:
+   - Define:
      \[
-     f_j^{(t)} : \mathbf{X}_{\mathcal{O}_j, -j}^{(t-1)} \rightarrow \mathbf{Y}_{\mathcal{O}_j}
+     \mathbf{Y}_j = \left( x_{ij} \right)_{i \in \mathcal{O}_j}, \quad
+     \mathbf{Z}_j = \left( \mathbf{x}_{i, -j}^{(t-1)} \right)_{i \in \mathcal{O}_j}
      \]
-   - Predict missing values \( \hat{x}_{ij}^{(t)} = f_j^{(t)}(\mathbf{X}_{i, -j}^{(t-1)}) \) for \( i \in \mathcal{M}_j \).
-3. Repeat the process for all variables \( j = 1, \dots, p \).
+   - Train a Random Forest model \( \hat{f}_j^{(t)} \) using observed data \( (\mathbf{Z}_j, \mathbf{Y}_j) \).
+   - Predict missing entries for \( i \in \mathcal{M}_j \) via:
+     \[
+     \hat{x}_{ij}^{(t)} = \hat{f}_j^{(t)} \left( \mathbf{x}_{i, -j}^{(t-1)} \right)
+     \]
+3. Replace the missing entries in variable \( j \) with \( \hat{x}_{ij}^{(t)} \) and proceed to the next variable.
 
-The updated matrix \( \mathbf{X}^{(t)} \) combines observed values with new predictions for all variables.
+After all variables have been processed, the updated matrix \( \mathbf{X}^{(t)} \) is used in the next iteration.
 
-### Convergence and Stopping
+---
 
-The iterations continue until a stopping criterion is met, such as:
-- No substantial change in imputed values between \( \mathbf{X}^{(t)} \) and \( \mathbf{X}^{(t-1)} \),
-- Or a fixed maximum number of iterations.
+### Stopping Criterion
 
-The normalized root mean squared error (NRMSE) or proportion of falsely classified entries (PFC) can be used to assess convergence and performance.
+To determine convergence, the algorithm computes the change in imputed values between iterations \( t \) and \( t-1 \), separately for continuous and categorical variables.
 
+- For continuous variables \( \mathcal{N} \):
 
-# Example 1; Continuous Variables only
-## Over
+\[
+\Delta_{\mathcal{N}}^{(t)} = \frac{ \sum_{j \in \mathcal{N}} \left\| \mathbf{X}_j^{(t)} - \mathbf{X}_j^{(t-1)} \right\|^2 }
+{ \sum_{j \in \mathcal{N}} \left\| \mathbf{X}_j^{(t)} \right\|^2 }
+\]
+
+- For categorical variables \( \mathcal{F} \):
+
+\[
+\Delta_{\mathcal{F}}^{(t)} = \frac{ \sum_{j \in \mathcal{F}} \sum_{i \in \mathcal{M}_j} \mathbb{I} \left( x_{ij}^{(t)} \ne x_{ij}^{(t-1)} \right) }{ \sum_{j \in \mathcal{F}} |\mathcal{M}_j| }
+\]
+
+The algorithm stops when either \( \Delta_{\mathcal{N}}^{(t)} \) or \( \Delta_{\mathcal{F}}^{(t)} \) increases compared to the previous iteration.
+
+---
+
+### Evaluation Metric
+
+To assess imputation performance, the **Normalized Root Mean Squared Error (NRMSE)**[@oba2003bayesian] is used for continuous variables:
+
+\[
+\text{NRMSE} = \sqrt{ \frac{ \text{mean} \left( \left( \mathbf{X}_{\text{true}} - \mathbf{X}_{\text{imp}} \right)^2 \right) }{ \text{var} \left( \mathbf{X}_{\text{true}} \right) } }
+\]
+
+This is computed only over entries that were originally missing. A lower NRMSE indicates better imputation accuracy, and it provides a scale-invariant comparison between methods and datasets.
+
+# Applications 
+## Continuous Variables only
 # References

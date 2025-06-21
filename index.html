@@ -2920,69 +2920,115 @@ variance; large values may oversmooth or dilute local structure.</p>
 <div id="random-forest-imputation" class="section level2" number="2.2">
 <h2><span class="header-section-number">2.2</span> Random Forest
 Imputation</h2>
-<p>The mathematical setup presented in this section is based on the work
-of Stekhoven and Bühlmann <span class="citation">(<a href="#ref-stekhoven2012missforest">Stekhoven &amp; Bühlmann,
-2012</a>)</span>, who introduced the missForest algorithm for
-non-parametric imputation of mixed-type data using Random Forests.</p>
+<p>The Random Forest-based imputation approach used in this study is
+based on the missForest algorithm introduced by Stekhoven and Bühlmann
+<span class="citation">(<a href="#ref-stekhoven2012missforest">Stekhoven
+&amp; Bühlmann, 2012</a>)</span>. This method uses iterative,
+variable-wise Random Forest models to estimate missing entries in a
+mixed-type data matrix without relying on parametric assumptions.</p>
+<hr />
 <div id="data-structure-and-objective" class="section level3" number="2.2.1">
 <h3><span class="header-section-number">2.2.1</span> Data Structure and
 Objective</h3>
 <p>Let <span class="math inline">\(\mathbf{X} = (x_{ij}) \in
-\mathbb{R}^{n \times p}\)</span> be a data matrix with <span class="math inline">\(n\)</span> observations and <span class="math inline">\(p\)</span> variables. Denote by <span class="math inline">\(\mathcal{M}_j \subseteq \{1, \dots, n\}\)</span>
-the set of indices with missing values in variable <span class="math inline">\(j\)</span>, and let <span class="math inline">\(\mathcal{O}_j = \{1, \dots, n\} \setminus
-\mathcal{M}_j\)</span> be the observed entries for that variable.</p>
-<p>The goal is to impute all missing values in <span class="math inline">\(\mathbf{X}\)</span> using a non-parametric model
-without making distributional assumptions.</p>
+\mathbb{R}^{n \times p}\)</span> denote a data matrix with <span class="math inline">\(n\)</span> observations and <span class="math inline">\(p\)</span> variables. Some entries in <span class="math inline">\(\mathbf{X}\)</span> are missing.</p>
+<p>For each variable <span class="math inline">\(j \in \{1, \dots,
+p\}\)</span>, define <span class="math inline">\(\mathcal{M}_j = \{ i
+\in \{1, \dots, n\} : x_{ij} \text{ is missing} \}\)</span> — the
+indices with missing entries, and <span class="math inline">\(\mathcal{O}_j = \{1, \dots, n\} \setminus
+\mathcal{M}_j\)</span> — the indices with observed entries.</p>
+<p>The objective is to impute all missing values in <span class="math inline">\(\mathbf{X}\)</span> using an iterative,
+non-parametric regression/classification scheme based on Random
+Forests.</p>
+<hr />
 </div>
-<div id="iterative-imputation-scheme" class="section level3" number="2.2.2">
-<h3><span class="header-section-number">2.2.2</span> Iterative
+<div id="initialization" class="section level3" number="2.2.2">
+<h3><span class="header-section-number">2.2.2</span> Initialization</h3>
+<p>Let <span class="math inline">\(\mathbf{X}^{(0)}\)</span> be the
+initial imputed matrix, constructed by applying: - Mean imputation for
+continuous variables, - Mode imputation for categorical variables.</p>
+<p>This serves as the starting point for the iterative procedure.</p>
+<hr />
+</div>
+<div id="iterative-imputation-scheme" class="section level3" number="2.2.3">
+<h3><span class="header-section-number">2.2.3</span> Iterative
 Imputation Scheme</h3>
-<p>The missForest algorithm proceeds iteratively. Let <span class="math inline">\(\mathbf{X}^{(0)}\)</span> be the initial matrix
-with missing values imputed using mean imputation (numerical) or mode
-imputation (categorical). For iteration <span class="math inline">\(t =
-1, 2, \dots\)</span>, the procedure is:</p>
+<p>For each iteration <span class="math inline">\(t = 1, 2,
+\dots\)</span>, the following steps are performed:</p>
 <ol style="list-style-type: decimal">
-<li>Define a variable-wise ordering such that variables with fewer
-missing values are imputed first.</li>
+<li>Determine a variable ordering from least to most missing
+values.</li>
 <li>For each variable <span class="math inline">\(j \in \{1, \dots,
 p\}\)</span>:
 <ul>
-<li>Let <span class="math inline">\(\mathbf{Y}_{\mathcal{O}_j} =
-\{x_{ij} : i \in \mathcal{O}_j\}\)</span> be the observed
-responses.</li>
-<li>Let <span class="math inline">\(\mathbf{X}_{\mathcal{O}_j,
--j}^{(t-1)}\)</span> be the corresponding predictors (excluding <span class="math inline">\(j\)</span>) for observed rows.</li>
-<li>Train a Random Forest regression or classification model <span class="math inline">\(f_j^{(t)}\)</span> using: <span class="math display">\[
-f_j^{(t)} : \mathbf{X}_{\mathcal{O}_j, -j}^{(t-1)} \rightarrow
-\mathbf{Y}_{\mathcal{O}_j}
+<li>Define: <span class="math display">\[
+\mathbf{Y}_j = \left( x_{ij} \right)_{i \in \mathcal{O}_j}, \quad
+\mathbf{Z}_j = \left( \mathbf{x}_{i, -j}^{(t-1)} \right)_{i \in
+\mathcal{O}_j}
 \]</span></li>
-<li>Predict missing values <span class="math inline">\(\hat{x}_{ij}^{(t)} = f_j^{(t)}(\mathbf{X}_{i,
--j}^{(t-1)})\)</span> for <span class="math inline">\(i \in
-\mathcal{M}_j\)</span>.</li>
+<li>Train a Random Forest model <span class="math inline">\(\hat{f}_j^{(t)}\)</span> using observed data <span class="math inline">\((\mathbf{Z}_j, \mathbf{Y}_j)\)</span>.</li>
+<li>Predict missing entries for <span class="math inline">\(i \in
+\mathcal{M}_j\)</span> via: <span class="math display">\[
+\hat{x}_{ij}^{(t)} = \hat{f}_j^{(t)} \left( \mathbf{x}_{i, -j}^{(t-1)}
+\right)
+\]</span></li>
 </ul></li>
-<li>Repeat the process for all variables <span class="math inline">\(j =
-1, \dots, p\)</span>.</li>
+<li>Replace the missing entries in variable <span class="math inline">\(j\)</span> with <span class="math inline">\(\hat{x}_{ij}^{(t)}\)</span> and proceed to the
+next variable.</li>
 </ol>
-<p>The updated matrix <span class="math inline">\(\mathbf{X}^{(t)}\)</span> combines observed values
-with new predictions for all variables.</p>
+<p>After all variables have been processed, the updated matrix <span class="math inline">\(\mathbf{X}^{(t)}\)</span> is used in the next
+iteration.</p>
+<hr />
 </div>
-<div id="convergence-and-stopping" class="section level3" number="2.2.3">
-<h3><span class="header-section-number">2.2.3</span> Convergence and
-Stopping</h3>
-<p>The iterations continue until a stopping criterion is met, such as: -
-No substantial change in imputed values between <span class="math inline">\(\mathbf{X}^{(t)}\)</span> and <span class="math inline">\(\mathbf{X}^{(t-1)}\)</span>, - Or a fixed maximum
-number of iterations.</p>
-<p>The normalized root mean squared error (NRMSE) or proportion of
-falsely classified entries (PFC) can be used to assess convergence and
-performance.</p>
+<div id="stopping-criterion" class="section level3" number="2.2.4">
+<h3><span class="header-section-number">2.2.4</span> Stopping
+Criterion</h3>
+<p>To determine convergence, the algorithm computes the change in
+imputed values between iterations <span class="math inline">\(t\)</span>
+and <span class="math inline">\(t-1\)</span>, separately for continuous
+and categorical variables.</p>
+<ul>
+<li>For continuous variables <span class="math inline">\(\mathcal{N}\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+\Delta_{\mathcal{N}}^{(t)} = \frac{ \sum_{j \in \mathcal{N}} \left\|
+\mathbf{X}_j^{(t)} - \mathbf{X}_j^{(t-1)} \right\|^2 }
+{ \sum_{j \in \mathcal{N}} \left\| \mathbf{X}_j^{(t)} \right\|^2 }
+\]</span></p>
+<ul>
+<li>For categorical variables <span class="math inline">\(\mathcal{F}\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+\Delta_{\mathcal{F}}^{(t)} = \frac{ \sum_{j \in \mathcal{F}} \sum_{i \in
+\mathcal{M}_j} \mathbb{I} \left( x_{ij}^{(t)} \ne x_{ij}^{(t-1)} \right)
+}{ \sum_{j \in \mathcal{F}} |\mathcal{M}_j| }
+\]</span></p>
+<p>The algorithm stops when either <span class="math inline">\(\Delta_{\mathcal{N}}^{(t)}\)</span> or <span class="math inline">\(\Delta_{\mathcal{F}}^{(t)}\)</span> increases
+compared to the previous iteration.</p>
+<hr />
+</div>
+<div id="evaluation-metric" class="section level3" number="2.2.5">
+<h3><span class="header-section-number">2.2.5</span> Evaluation
+Metric</h3>
+<p>To assess imputation performance, the <strong>Normalized Root Mean
+Squared Error (NRMSE)</strong><span class="citation">(<a href="#ref-oba2003bayesian">Oba et al., 2003</a>)</span> is used for
+continuous variables:</p>
+<p><span class="math display">\[
+\text{NRMSE} = \sqrt{ \frac{ \text{mean} \left( \left(
+\mathbf{X}_{\text{true}} - \mathbf{X}_{\text{imp}} \right)^2 \right) }{
+\text{var} \left( \mathbf{X}_{\text{true}} \right) } }
+\]</span></p>
+<p>This is computed only over entries that were originally missing. A
+lower NRMSE indicates better imputation accuracy, and it provides a
+scale-invariant comparison between methods and datasets.</p>
 </div>
 </div>
 </div>
-<div id="example-1-continuous-variables-only" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> Example 1; Continuous
-Variables only</h1>
-<div id="over" class="section level2" number="3.1">
-<h2><span class="header-section-number">3.1</span> Over</h2>
+<div id="applications" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Applications</h1>
+<div id="continuous-variables-only" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Continuous Variables
+only</h2>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -2995,6 +3041,12 @@ properties. <em>Biometrics</em>, 857–871.
 <div id="ref-kowarik2016imputation" class="csl-entry">
 Kowarik, A., &amp; Templ, M. (2016). Imputation with the r package VIM.
 <em>Journal of Statistical Software</em>, <em>74</em>, 1–16.
+</div>
+<div id="ref-oba2003bayesian" class="csl-entry">
+Oba, S., Sato, M., Takemasa, I., Monden, M., Matsubara, K., &amp; Ishii,
+S. (2003). A bayesian missing value estimation method for gene
+expression profile data. <em>Bioinformatics</em>, <em>19</em>(16),
+2088–2096.
 </div>
 <div id="ref-stekhoven2012missforest" class="csl-entry">
 Stekhoven, D. J., &amp; Bühlmann, P. (2012). MissForest—non-parametric
