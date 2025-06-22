@@ -3150,12 +3150,239 @@ study hours, sleep duration, social media usage, diet quality, and
 mental health rating, alongside their final exam score. Only the
 continuous variables are selected for this section.</li>
 </ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(readr)</span></code></pre></div>
-<pre><code>## Warning: package &#39;readr&#39; was built under R version 4.3.3</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>contdat1 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;Datasets/Student_Habits.csv&quot;</span>) <span class="co">#reading data</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>contdat1 <span class="ot">&lt;-</span> contdat1[, <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">7</span>,<span class="dv">10</span>,<span class="dv">12</span>,<span class="dv">13</span>,<span class="dv">15</span>)] <span class="co">#removing all categorical variables</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>Fitbit <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;Datasets/dailyActivity_merged.csv&quot;</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>Fitbit <span class="ot">&lt;-</span> Fitbit[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)]</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>Habit <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;Datasets/Student_Habits.csv&quot;</span>) <span class="co">#reading data</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>Habit <span class="ot">&lt;-</span> Habit[, <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">7</span>,<span class="dv">10</span>,<span class="dv">12</span>,<span class="dv">13</span>,<span class="dv">15</span>)] <span class="co">#removing all categorical variables</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">head</span>(Habit)</span></code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["study_hours_per_day"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["social_media_hours"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["netflix_hours"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["attendance_percentage"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["sleep_hours"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["exercise_frequency"],"name":[7],"type":["int"],"align":["right"]},{"label":["mental_health_rating"],"name":[8],"type":["int"],"align":["right"]},{"label":["exam_score"],"name":[9],"type":["dbl"],"align":["right"]}],"data":[{"1":"23","2":"0.0","3":"1.2","4":"1.1","5":"85.0","6":"8.0","7":"6","8":"8","9":"56.2","_rn_":"1"},{"1":"20","2":"6.9","3":"2.8","4":"2.3","5":"97.3","6":"4.6","7":"6","8":"8","9":"100.0","_rn_":"2"},{"1":"21","2":"1.4","3":"3.1","4":"1.3","5":"94.8","6":"8.0","7":"1","8":"1","9":"34.3","_rn_":"3"},{"1":"23","2":"1.0","3":"3.9","4":"1.0","5":"71.0","6":"9.2","7":"4","8":"1","9":"26.8","_rn_":"4"},{"1":"19","2":"5.0","3":"4.4","4":"0.5","5":"90.9","6":"4.9","7":"3","8":"1","9":"66.4","_rn_":"5"},{"1":"24","2":"7.2","3":"1.3","4":"0.0","5":"82.9","6":"7.4","7":"1","8":"4","9":"100.0","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>Fitbit <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;Datasets/dailyActivity_merged.csv&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>Fitbit <span class="ot">&lt;-</span> Fitbit[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)]</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">head</span>(Fitbit)</span></code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["TotalSteps"],"name":[1],"type":["int"],"align":["right"]},{"label":["TotalDistance"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["TrackerDistance"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["LoggedActivitiesDistance"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["VeryActiveDistance"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["ModeratelyActiveDistance"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["LightActiveDistance"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["SedentaryActiveDistance"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["VeryActiveMinutes"],"name":[9],"type":["int"],"align":["right"]},{"label":["FairlyActiveMinutes"],"name":[10],"type":["int"],"align":["right"]},{"label":["LightlyActiveMinutes"],"name":[11],"type":["int"],"align":["right"]},{"label":["SedentaryMinutes"],"name":[12],"type":["int"],"align":["right"]},{"label":["Calories"],"name":[13],"type":["int"],"align":["right"]}],"data":[{"1":"13162","2":"8.50","3":"8.50","4":"0","5":"1.88","6":"0.55","7":"6.06","8":"0","9":"25","10":"13","11":"328","12":"728","13":"1985","_rn_":"1"},{"1":"10735","2":"6.97","3":"6.97","4":"0","5":"1.57","6":"0.69","7":"4.71","8":"0","9":"21","10":"19","11":"217","12":"776","13":"1797","_rn_":"2"},{"1":"10460","2":"6.74","3":"6.74","4":"0","5":"2.44","6":"0.40","7":"3.91","8":"0","9":"30","10":"11","11":"181","12":"1218","13":"1776","_rn_":"3"},{"1":"9762","2":"6.28","3":"6.28","4":"0","5":"2.14","6":"1.26","7":"2.83","8":"0","9":"29","10":"34","11":"209","12":"726","13":"1745","_rn_":"4"},{"1":"12669","2":"8.16","3":"8.16","4":"0","5":"2.71","6":"0.41","7":"5.04","8":"0","9":"36","10":"10","11":"221","12":"773","13":"1863","_rn_":"5"},{"1":"9705","2":"6.48","3":"6.48","4":"0","5":"3.19","6":"0.78","7":"2.51","8":"0","9":"38","10":"20","11":"164","12":"539","13":"1728","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div id="fitbit-data" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Fitbit Data</h2>
+<p>We write a function that generates versions of a dataset with 10%,
+20%, and 30% missing values by applying the <code>produce_NA()</code>
+function at each level and store the results in a list. We also write a
+function to compute the NRMSE.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>dat_missing <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  missingLevels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  missing_datasets <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> missingLevels) {</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    data_missing <span class="ot">&lt;-</span> <span class="fu">produce_NA</span>(data, <span class="at">proportion =</span> i)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    missing_datasets[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, i <span class="sc">*</span> <span class="dv">100</span>)]] <span class="ot">&lt;-</span> data_missing</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  }</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  </span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="fu">return</span>(missing_datasets)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>}</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co"># Normalized Root Mean Squared Error</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>nrmse <span class="ot">&lt;-</span> <span class="cf">function</span>(imputed, original, mask) {</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">mean</span>((imputed[mask] <span class="sc">-</span> original[mask])<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">/</span> <span class="fu">sd</span>(original[mask])</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>}</span></code></pre></div>
+<p>The codes below compare the imputation performance of
+<strong>KNN</strong> and <strong>missForest</strong> across 100
+repetitions and 3 levels of missingness (10%, 20%, 30%). For each
+repetition, it introduces missing values using
+<code>dat_missing()</code>, imputes them using both methods, and stores
+the Normalized Root Mean Squared Error (NRMSE) results in a list.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(VIM)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(missForest)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">library</span>(missForestPredict)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2025</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>reps <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>missingLevels <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>methods <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;KNN&quot;</span>, <span class="st">&quot;missForest&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>results_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="cf">for</span> (level <span class="cf">in</span> missingLevels) {</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  </span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  rep_results <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> reps, <span class="at">ncol =</span> <span class="fu">length</span>(methods))</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="fu">colnames</span>(rep_results) <span class="ot">&lt;-</span> methods</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  </span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>reps) {</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>    </span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>    <span class="co"># Generate  NAs</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>    data_missing_list <span class="ot">&lt;-</span> <span class="fu">dat_missing</span>(Fitbit)</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>    data_miss <span class="ot">&lt;-</span> data_missing_list[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, level <span class="sc">*</span> <span class="dv">100</span>)]]</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>    mask <span class="ot">&lt;-</span> <span class="fu">is.na</span>(data_miss)</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>    </span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>    <span class="co"># KNN</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>    knn_out <span class="ot">&lt;-</span> <span class="fu">kNN</span>(data_miss, <span class="at">k =</span> <span class="fu">ncol</span>(data_miss)<span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>    <span class="co"># get imputed data</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>    knn_imp <span class="ot">&lt;-</span> knn_out[, <span class="dv">1</span><span class="sc">:</span><span class="dv">13</span>]</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>    rep_results[r, <span class="st">&quot;KNN&quot;</span>] <span class="ot">&lt;-</span> <span class="fu">nrmse</span>(knn_imp,Fitbit,<span class="fu">is.na</span>(data_miss))</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>    </span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>    <span class="co"># missForest</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>    mf_try <span class="ot">&lt;-</span> <span class="fu">missForest</span>(data_miss, <span class="at">verbose =</span> F)</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>      rep_results[r, <span class="st">&quot;missForest&quot;</span>] <span class="ot">&lt;-</span><span class="fu">nrmse</span>(mf_try<span class="sc">$</span>ximp,Fitbit,mask)</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>  }</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a>  results_list[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, level <span class="sc">*</span> <span class="dv">100</span>)]] <span class="ot">&lt;-</span> rep_results</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>}</span></code></pre></div>
+<p>The code below, finally compares the imputation performance of
+<strong>KNN</strong> and <strong>missForest</strong> across the three
+levels of missingness (10%, 20%, and 30%) using the average Normalized
+Root Mean Squared Error (<strong>NRMSE</strong>) from repeated
+simulations (100). For each method and missingness level, it computes
+the mean NRMSE and standard error, then performs a paired Wilcoxon
+signed-rank test to evaluate whether the difference in performance is
+statistically significant. If missForest outperforms KNN, asterisks
+(‘<em>’, ‘<strong>’, ‘</strong></em>’) are added to indicate
+significance at the 0.05, 0.01, and 0.001 levels, respectively. If KNN
+performs better, hash symbols (‘#’, ‘##’, ‘###’) are used instead. The
+results are stored in a summary table for interpretation and
+visualization.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>summary_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="cf">for</span> (name <span class="cf">in</span> <span class="fu">names</span>(results_list)) {</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  res <span class="ot">&lt;-</span> results_list[[name]]</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  level <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;missing_&quot;</span>, <span class="st">&quot;&quot;</span>, name)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  </span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="cf">for</span> (method <span class="cf">in</span> methods) {</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    method_data <span class="ot">&lt;-</span> res[, method]</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    method_data <span class="ot">&lt;-</span> method_data[<span class="sc">!</span><span class="fu">is.na</span>(method_data)]</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    </span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    avg <span class="ot">&lt;-</span> <span class="fu">mean</span>(method_data)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    se <span class="ot">&lt;-</span> <span class="fu">sd</span>(method_data) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">length</span>(method_data))</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>    </span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>    summary_df <span class="ot">&lt;-</span> <span class="fu">rbind</span>(summary_df, <span class="fu">data.frame</span>(</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>      <span class="at">MissingLevel =</span> <span class="fu">paste0</span>(level, <span class="st">&quot;%&quot;</span>),</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>      <span class="at">Method =</span> method,</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>      <span class="at">MeanNRMSE =</span> <span class="fu">round</span>(avg, <span class="dv">5</span>),</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>      <span class="at">SE =</span> <span class="fu">round</span>(se, <span class="dv">5</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>    ))</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>  }</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>}</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>summary_df<span class="sc">$</span>Signif <span class="ot">&lt;-</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="cf">for</span> (lvl <span class="cf">in</span> <span class="fu">unique</span>(summary_df<span class="sc">$</span>MissingLevel)) {</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>  res <span class="ot">&lt;-</span> results_list[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;%&quot;</span>, <span class="st">&quot;&quot;</span>, lvl))]]</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>  </span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a>  <span class="co"># KNN vs missForest</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(res[, <span class="st">&quot;KNN&quot;</span>])) <span class="sc">&amp;&amp;</span> <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(res[, <span class="st">&quot;missForest&quot;</span>]))) {</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a>    p_knn <span class="ot">&lt;-</span> <span class="fu">wilcox.test</span>(res[, <span class="st">&quot;missForest&quot;</span>], res[, <span class="st">&quot;KNN&quot;</span>], <span class="at">paired =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>p.value</span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>    summary_df<span class="sc">$</span>Signif[summary_df<span class="sc">$</span>MissingLevel <span class="sc">==</span> lvl <span class="sc">&amp;</span> summary_df<span class="sc">$</span>Method <span class="sc">==</span> <span class="st">&quot;KNN&quot;</span>] <span class="ot">&lt;-</span> </span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">mean</span>(res[, <span class="st">&quot;KNN&quot;</span>]) <span class="sc">&gt;</span> <span class="fu">mean</span>(res[, <span class="st">&quot;missForest&quot;</span>])) {</span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a>        <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.001</span>) <span class="st">&quot;###&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.01</span>) <span class="st">&quot;##&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.05</span>) <span class="st">&quot;#&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a>        <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.001</span>) <span class="st">&quot;***&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.01</span>) <span class="st">&quot;**&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.05</span>) <span class="st">&quot;*&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a>      }</span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a>  }</span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a>}</span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="fu">print</span>(summary_df)</span></code></pre></div>
+<pre><code>##   MissingLevel     Method MeanNRMSE      SE Signif
+## 1          10%        KNN   0.29612 0.00382    ###
+## 2          10% missForest   0.09532 0.00263       
+## 3          20%        KNN   0.40030 0.00249    ###
+## 4          20% missForest   0.10804 0.00240       
+## 5          30%        KNN   0.46150 0.00199    ###
+## 6          30% missForest   0.12537 0.00206</code></pre>
+<p>Across all three levels of missingness (10%, 20%, and 30%),
+<strong>missForest consistently outperforms KNN</strong> in terms of
+imputation accuracy, as measured by the Normalized Root Mean Squared
+Error (<strong>NRMSE</strong>). At 10% missingness, the average NRMSE
+for missForest is 0.09696, compared to 0.30411 for KNN. As the level of
+missing data increases, the performance gap widens: at 20%, missForest
+achieves 0.10498 while KNN reaches 0.40751; and at 30%, missForest
+records 0.12153 versus 0.47084 for KNN. Paired Wilcoxon signed-rank
+tests were performed to assess the statistical significance of these
+differences. The results indicate that <strong>KNN performs
+significantly worse than missForest at every level</strong>, with
+p-values less than 0.001, denoted by the <code>###</code> symbol. This
+consistent and statistically significant advantage demonstrates that
+<strong>missForest is not only more accurate but also more
+robust</strong> to increasing amounts of missing data.</p>
+</div>
+<div id="habit-dataset" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Habit Dataset</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>results_list2 <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="cf">for</span> (level <span class="cf">in</span> missingLevels) {</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  rep_results <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> reps, <span class="at">ncol =</span> <span class="fu">length</span>(methods))</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="fu">colnames</span>(rep_results) <span class="ot">&lt;-</span> methods</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  </span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>reps) {</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    </span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="co"># Generate  NAs</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    data_missing_list <span class="ot">&lt;-</span> <span class="fu">dat_missing</span>(Habit)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>    data_miss <span class="ot">&lt;-</span> data_missing_list[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, level <span class="sc">*</span> <span class="dv">100</span>)]]</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>    mask <span class="ot">&lt;-</span> <span class="fu">is.na</span>(data_miss)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    </span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    <span class="co"># KNN</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>    knn_out <span class="ot">&lt;-</span> <span class="fu">kNN</span>(data_miss, <span class="at">k =</span> <span class="dv">5</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>    <span class="co"># get imputed data</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>    knn_imp <span class="ot">&lt;-</span> knn_out[, <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>]</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>    rep_results[r, <span class="st">&quot;KNN&quot;</span>] <span class="ot">&lt;-</span> <span class="fu">nrmse</span>(knn_imp,Habit,<span class="fu">is.na</span>(data_miss))</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>    </span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>    <span class="co"># missForest</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>    mf_try <span class="ot">&lt;-</span> <span class="fu">missForest</span>(data_miss, <span class="at">verbose =</span> F)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>      rep_results[r, <span class="st">&quot;missForest&quot;</span>] <span class="ot">&lt;-</span><span class="fu">nrmse</span>(mf_try<span class="sc">$</span>ximp,Habit,mask)</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  }</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>  results_list2[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, level <span class="sc">*</span> <span class="dv">100</span>)]] <span class="ot">&lt;-</span> rep_results</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>}</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>summary_df2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="cf">for</span> (name <span class="cf">in</span> <span class="fu">names</span>(results_list2)) {</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>  res <span class="ot">&lt;-</span> results_list2[[name]]</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  level <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;missing_&quot;</span>, <span class="st">&quot;&quot;</span>, name)</span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  </span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>  <span class="cf">for</span> (method <span class="cf">in</span> methods) {</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a>    method_data <span class="ot">&lt;-</span> res[, method]</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>    method_data <span class="ot">&lt;-</span> method_data[<span class="sc">!</span><span class="fu">is.na</span>(method_data)]</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>    </span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a>    avg <span class="ot">&lt;-</span> <span class="fu">mean</span>(method_data)</span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a>    se <span class="ot">&lt;-</span> <span class="fu">sd</span>(method_data) <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="fu">length</span>(method_data))</span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a>    </span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a>    summary_df2 <span class="ot">&lt;-</span> <span class="fu">rbind</span>(summary_df2, <span class="fu">data.frame</span>(</span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a>      <span class="at">MissingLevel =</span> <span class="fu">paste0</span>(level, <span class="st">&quot;%&quot;</span>),</span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a>      <span class="at">Method =</span> method,</span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a>      <span class="at">MeanNRMSE =</span> <span class="fu">round</span>(avg, <span class="dv">5</span>),</span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a>      <span class="at">SE =</span> <span class="fu">round</span>(se, <span class="dv">5</span>)</span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a>    ))</span>
+<span id="cb7-47"><a href="#cb7-47" tabindex="-1"></a>  }</span>
+<span id="cb7-48"><a href="#cb7-48" tabindex="-1"></a>}</span>
+<span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a></span>
+<span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a>summary_df2<span class="sc">$</span>Signif <span class="ot">&lt;-</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a></span>
+<span id="cb7-52"><a href="#cb7-52" tabindex="-1"></a><span class="cf">for</span> (lvl <span class="cf">in</span> <span class="fu">unique</span>(summary_df2<span class="sc">$</span>MissingLevel)) {</span>
+<span id="cb7-53"><a href="#cb7-53" tabindex="-1"></a>  res <span class="ot">&lt;-</span> results_list2[[<span class="fu">paste0</span>(<span class="st">&quot;missing_&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;%&quot;</span>, <span class="st">&quot;&quot;</span>, lvl))]]</span>
+<span id="cb7-54"><a href="#cb7-54" tabindex="-1"></a>  </span>
+<span id="cb7-55"><a href="#cb7-55" tabindex="-1"></a>  <span class="co"># KNN vs missForest</span></span>
+<span id="cb7-56"><a href="#cb7-56" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(res[, <span class="st">&quot;KNN&quot;</span>])) <span class="sc">&amp;&amp;</span> <span class="fu">all</span>(<span class="sc">!</span><span class="fu">is.na</span>(res[, <span class="st">&quot;missForest&quot;</span>]))) {</span>
+<span id="cb7-57"><a href="#cb7-57" tabindex="-1"></a>    p_knn <span class="ot">&lt;-</span> <span class="fu">wilcox.test</span>(res[, <span class="st">&quot;missForest&quot;</span>], res[, <span class="st">&quot;KNN&quot;</span>], <span class="at">paired =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>p.value</span>
+<span id="cb7-58"><a href="#cb7-58" tabindex="-1"></a>    summary_df2<span class="sc">$</span>Signif[summary_df2<span class="sc">$</span>MissingLevel <span class="sc">==</span> lvl <span class="sc">&amp;</span> summary_df2<span class="sc">$</span>Method <span class="sc">==</span> <span class="st">&quot;KNN&quot;</span>] <span class="ot">&lt;-</span> </span>
+<span id="cb7-59"><a href="#cb7-59" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">mean</span>(res[, <span class="st">&quot;KNN&quot;</span>]) <span class="sc">&gt;</span> <span class="fu">mean</span>(res[, <span class="st">&quot;missForest&quot;</span>])) {</span>
+<span id="cb7-60"><a href="#cb7-60" tabindex="-1"></a>        <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.001</span>) <span class="st">&quot;###&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.01</span>) <span class="st">&quot;##&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.05</span>) <span class="st">&quot;#&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb7-61"><a href="#cb7-61" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb7-62"><a href="#cb7-62" tabindex="-1"></a>        <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.001</span>) <span class="st">&quot;***&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.01</span>) <span class="st">&quot;**&quot;</span> <span class="cf">else</span> <span class="cf">if</span> (p_knn <span class="sc">&lt;</span> <span class="fl">0.05</span>) <span class="st">&quot;*&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb7-63"><a href="#cb7-63" tabindex="-1"></a>      }</span>
+<span id="cb7-64"><a href="#cb7-64" tabindex="-1"></a>  }</span>
+<span id="cb7-65"><a href="#cb7-65" tabindex="-1"></a>}</span>
+<span id="cb7-66"><a href="#cb7-66" tabindex="-1"></a></span>
+<span id="cb7-67"><a href="#cb7-67" tabindex="-1"></a><span class="fu">print</span>(summary_df2)</span></code></pre></div>
+<pre><code>##   MissingLevel     Method MeanNRMSE      SE Signif
+## 1          10%        KNN   0.18508 0.00097    ###
+## 2          10% missForest   0.15086 0.00075       
+## 3          20%        KNN   0.19712 0.00066    ###
+## 4          20% missForest   0.16474 0.00053       
+## 5          30%        KNN   0.20646 0.00057    ###
+## 6          30% missForest   0.17642 0.00049</code></pre>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">

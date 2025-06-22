@@ -253,14 +253,199 @@ We look at continuous variables first. The two data sets below are obtained from
 - **[Student Habits vs Academic Performance](https://www.kaggle.com/datasets/jayaantanaath/student-habits-vs-academic-performance/data)**: this simulated dataset includes \( P = 16 \) variables measured across \( n = 1,000 \) observations. Each row represents a student and captures daily lifestyle habits such as study hours, sleep duration, social media usage, diet quality, and mental health rating, alongside their final exam score. Only the continuous variables are selected for this section.
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(readr)
-contdat1 <- read.csv("Datasets/Student_Habits.csv") #reading data
-contdat1 <- contdat1[, -c(1,3,7,10,12,13,15)] #removing all categorical variables
+Habit <- read.csv("Datasets/Student_Habits.csv") #reading data
+Habit <- Habit[, -c(1,3,7,10,12,13,15)] #removing all categorical variables
+head(Habit)
 Fitbit <- read.csv("Datasets/dailyActivity_merged.csv")
 Fitbit <- Fitbit[,-c(1,2)]
+head(Fitbit)
 
+```
+## Fitbit Data
+We write a function that generates versions of a dataset with 10%, 20%, and 30% missing values by applying the `produce_NA()` function at each level and store the results in a list. We also write a function to compute the NRMSE.
+
+```{r}
+dat_missing <- function(data) {
+  missingLevels <- c(0.1, 0.2, 0.3)
+  missing_datasets <- list()
+  
+  for (i in missingLevels) {
+    data_missing <- produce_NA(data, proportion = i)
+    
+    missing_datasets[[paste0("missing_", i * 100)]] <- data_missing
+  }
+  
+  return(missing_datasets)
+}
+
+# Normalized Root Mean Squared Error
+nrmse <- function(imputed, original, mask) {
+  sqrt(mean((imputed[mask] - original[mask])^2)) / sd(original[mask])
+}
+```
+The codes below compare the imputation performance of **KNN** and **missForest** across 100 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
+
+```{r, message=FALSE, warning=FALSE}
+library(VIM)
+library(missForest)
+library(missForestPredict)
+set.seed(2025)
+reps <- 100
+missingLevels <- c(0.1, 0.2, 0.3)
+methods <- c("KNN", "missForest")
+
+results_list <- list()
+
+for (level in missingLevels) {
+  
+  rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
+  colnames(rep_results) <- methods
+  
+  for (r in 1:reps) {
+    
+    # Generate  NAs
+    data_missing_list <- dat_missing(Fitbit)
+    data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+    mask <- is.na(data_miss)
+    
+    # KNN
+    knn_out <- kNN(data_miss, k = ncol(data_miss)/2)
+    # get imputed data
+    knn_imp <- knn_out[, 1:13]
+    rep_results[r, "KNN"] <- nrmse(knn_imp,Fitbit,is.na(data_miss))
+    
+    # missForest
+    mf_try <- missForest(data_miss, verbose = F)
+      rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Fitbit,mask)
+  }
+  results_list[[paste0("missing_", level * 100)]] <- rep_results
+}
 
 ```
 
-# References
+The code below, finally compares the imputation performance of **KNN** and **missForest** across the three levels of missingness (10%, 20%, and 30%) using the average Normalized Root Mean Squared Error (**NRMSE**) from repeated simulations (100). For each method and missingness level, it computes the mean NRMSE and standard error, then performs a paired Wilcoxon signed-rank test to evaluate whether the difference in performance is statistically significant. If missForest outperforms KNN, asterisks (‘*’, ‘**’, ‘***’) are added to indicate significance at the 0.05, 0.01, and 0.001 levels, respectively. If KNN performs better, hash symbols (‘#’, ‘##’, ‘###’) are used instead. The results are stored in a summary table for interpretation and visualization.
+
+```{r}
+summary_df <- data.frame()
+
+for (name in names(results_list)) {
+  res <- results_list[[name]]
+  level <- gsub("missing_", "", name)
+  
+  for (method in methods) {
+    method_data <- res[, method]
+    method_data <- method_data[!is.na(method_data)]
+    
+    avg <- mean(method_data)
+    se <- sd(method_data) / sqrt(length(method_data))
+    
+    summary_df <- rbind(summary_df, data.frame(
+      MissingLevel = paste0(level, "%"),
+      Method = method,
+      MeanNRMSE = round(avg, 5),
+      SE = round(se, 5)
+    ))
+  }
+}
+
+summary_df$Signif <- ""
+
+for (lvl in unique(summary_df$MissingLevel)) {
+  res <- results_list[[paste0("missing_", gsub("%", "", lvl))]]
+  
+  # KNN vs missForest
+  if (all(!is.na(res[, "KNN"])) && all(!is.na(res[, "missForest"]))) {
+    p_knn <- wilcox.test(res[, "missForest"], res[, "KNN"], paired = TRUE)$p.value
+    summary_df$Signif[summary_df$MissingLevel == lvl & summary_df$Method == "KNN"] <- 
+      if (mean(res[, "KNN"]) > mean(res[, "missForest"])) {
+        if (p_knn < 0.001) "###" else if (p_knn < 0.01) "##" else if (p_knn < 0.05) "#" else ""
+      } else {
+        if (p_knn < 0.001) "***" else if (p_knn < 0.01) "**" else if (p_knn < 0.05) "*" else ""
+      }
+  }
+}
+
+print(summary_df)
+```
+Across all three levels of missingness (10%, 20%, and 30%), **missForest consistently outperforms KNN** in terms of imputation accuracy, as measured by the Normalized Root Mean Squared Error (**NRMSE**). At 10% missingness, the average NRMSE for missForest is 0.09696, compared to 0.30411 for KNN. As the level of missing data increases, the performance gap widens: at 20%, missForest achieves 0.10498 while KNN reaches 0.40751; and at 30%, missForest records 0.12153 versus 0.47084 for KNN. Paired Wilcoxon signed-rank tests were performed to assess the statistical significance of these differences. The results indicate that **KNN performs significantly worse than missForest at every level**, with p-values less than 0.001, denoted by the `###` symbol. This consistent and statistically significant advantage demonstrates that **missForest is not only more accurate but also more robust** to increasing amounts of missing data.
+
+
+## Habit Dataset
+
+```{r}
+results_list2 <- list()
+
+for (level in missingLevels) {
+  
+  rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
+  colnames(rep_results) <- methods
+  
+  for (r in 1:reps) {
+    
+    # Generate  NAs
+    data_missing_list <- dat_missing(Habit)
+    data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+    mask <- is.na(data_miss)
+    
+    # KNN
+    knn_out <- kNN(data_miss, k = 5)
+    # get imputed data
+    knn_imp <- knn_out[, 1:9]
+    rep_results[r, "KNN"] <- nrmse(knn_imp,Habit,is.na(data_miss))
+    
+    # missForest
+    mf_try <- missForest(data_miss, verbose = F)
+      rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Habit,mask)
+  }
+  results_list2[[paste0("missing_", level * 100)]] <- rep_results
+}
+
+summary_df2 <- data.frame()
+
+for (name in names(results_list2)) {
+  res <- results_list2[[name]]
+  level <- gsub("missing_", "", name)
+  
+  for (method in methods) {
+    method_data <- res[, method]
+    method_data <- method_data[!is.na(method_data)]
+    
+    avg <- mean(method_data)
+    se <- sd(method_data) / sqrt(length(method_data))
+    
+    summary_df2 <- rbind(summary_df2, data.frame(
+      MissingLevel = paste0(level, "%"),
+      Method = method,
+      MeanNRMSE = round(avg, 5),
+      SE = round(se, 5)
+    ))
+  }
+}
+
+summary_df2$Signif <- ""
+
+for (lvl in unique(summary_df2$MissingLevel)) {
+  res <- results_list2[[paste0("missing_", gsub("%", "", lvl))]]
+  
+  # KNN vs missForest
+  if (all(!is.na(res[, "KNN"])) && all(!is.na(res[, "missForest"]))) {
+    p_knn <- wilcox.test(res[, "missForest"], res[, "KNN"], paired = TRUE)$p.value
+    summary_df2$Signif[summary_df2$MissingLevel == lvl & summary_df2$Method == "KNN"] <- 
+      if (mean(res[, "KNN"]) > mean(res[, "missForest"])) {
+        if (p_knn < 0.001) "###" else if (p_knn < 0.01) "##" else if (p_knn < 0.05) "#" else ""
+      } else {
+        if (p_knn < 0.001) "***" else if (p_knn < 0.01) "**" else if (p_knn < 0.05) "*" else ""
+      }
+  }
+}
+
+print(summary_df2)
+```
+For the **Student Habits vs Academic Performance** dataset, missForest again consistently outperforms KNN across all three missingness levels (10%, 20%, and 30%) in terms of lower Normalized Root Mean Squared Error (NRMSE). At 10% missingness, missForest achieves an average NRMSE of 0.15086, compared to 0.18508 for KNN. This performance gap remains stable as missingness increases: at 20%, missForest records 0.16474 while KNN rises to 0.19712, and at 30%, missForest reaches 0.17642 compared to 0.20646 for KNN.
+
+Paired Wilcoxon signed-rank tests show that the differences are **highly statistically significant** at every level of missingness, as indicated by the `###` symbols for KNN (corresponding to \( p < 0.001 \)). These results confirm that missForest provides a more accurate and statistically robust imputation approach than KNN for this dataset, even as the proportion of missing data increases.
+
+
+#References
