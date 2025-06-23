@@ -34,7 +34,7 @@ We also utilize Random Forest (RF), a non-parametric ensemble method, for imputa
 The goal of this document is to provide a theoretical background for the two imputation methods mentioned above, apply them to datasets with different structures and missingness patterns, and compare their performance.
 
 ## The `KNN` Function
-`kNN(
+<pre> kNN(
   data,
   variable = colnames(data),
   metric = NULL,
@@ -59,10 +59,10 @@ The goal of this document is to provide a theoretical background for the two imp
   weightDist = FALSE,
   methodStand = "range",
   ordFun = medianSamp
-)`
+)</pre>
 
 ## The `missForest` Function
-`missForest(
+<pre> missForest(
   xmis,
   maxiter = 10,
   fixed_maxiter = FALSE,
@@ -78,7 +78,7 @@ The goal of this document is to provide a theoretical background for the two imp
   verbose = TRUE,
   convergence_error = "OOB",
   ...
-)`
+)</pre>
 
 # Mathematical Setup
 ## K Nearest Neighbor Imputation
@@ -247,7 +247,7 @@ This is computed only over entries that were originally missing. A lower NRMSE i
 # Applications 
 ## Continuous Variables only
 
-We look at continuous variables first. The two data sets below are obtained from Kaggle.
+We begin by focusing on continuous variables, using two datasets obtained from Kaggle.
 
 - **FitBit Fitness Tracker Data**: this dataset includes \( P = 13 \) variables measured across \( n = 940 \) observations from wearable fitness devices. The data combines daily activity records, sleep duration, hourly intensity levels, and second-level heart rate readings. It was obtained from Kaggle and constructed by merging four selected files from the original FitBit collection. For more details on this dataset, see **[FitBit Fitness Tracker Data](https://www.kaggle.com/datasets/arashnic/fitbit/data)**.
 - **[Student Habits vs Academic Performance](https://www.kaggle.com/datasets/jayaantanaath/student-habits-vs-academic-performance/data)**: this simulated dataset includes \( P = 16 \) variables measured across \( n = 1,000 \) observations. Each row represents a student and captures daily lifestyle habits such as study hours, sleep duration, social media usage, diet quality, and mental health rating, alongside their final exam score. Only the continuous variables are selected for this section.
@@ -270,7 +270,8 @@ head(Fitbit_Cont)
 ```
 
 ## Fitbit Data
-We write a function that generates versions of a dataset with 10%, 20%, and 30% missing values by applying the `produce_NA()` function at each level and store the results in a list. We also write a function to compute the NRMSE.
+We define a function that creates versions of a dataset with 10%, 20%, and 30% missing values using the `produce_NA()` function. These are stored in a list for later use. We also define a function to compute the Normalized Root Mean Squared Error (NRMSE).
+
 
 ```{r}
 dat_missing <- function(data) {
@@ -291,7 +292,7 @@ nrmse <- function(imputed, original, mask) {
   sqrt(mean((imputed[mask] - original[mask])^2)) / sd(original[mask])
 }
 ```
-The codes below compare the imputation performance of **KNN** and **missForest** across 100 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
+The codes below compare the imputation performance of **KNN** and **missForest** across 50 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
 
 ```{r load-results, message=FALSE, warning=FALSE}
 results_list <- readRDS("results/results_fitbit_cont.rds")
@@ -339,7 +340,7 @@ results_list_cat <- readRDS("results/results_habit_cat.rds")
 
 ```
 
-The code below, finally compares the imputation performance of **KNN** and **missForest** across the three levels of missingness (10%, 20%, and 30%) using the average Normalized Root Mean Squared Error (**NRMSE**) from repeated simulations (100). For each method and missingness level, it computes the mean NRMSE and standard error, then performs a paired Wilcoxon signed-rank test to evaluate whether the difference in performance is statistically significant. If missForest outperforms KNN, asterisks (‘*’, ‘**’, ‘***’) are added to indicate significance at the 0.05, 0.01, and 0.001 levels, respectively. If KNN performs better, hash symbols (‘#’, ‘##’, ‘###’) are used instead. The results are stored in a summary table for interpretation and visualization.
+The code below, finally compares the imputation performance of **KNN** and **missForest** across the three levels of missingness (10%, 20%, and 30%) using the average Normalized Root Mean Squared Error (**NRMSE**) from repeated simulations (100). For each method and missingness level, it computes the mean NRMSE and standard error, then performs a paired Wilcoxon signed-rank test to evaluate whether the difference in performance is statistically significant. If KNN outperforms missForest, asterisks (‘*’, ‘**’, ‘***’) are added to indicate significance at the 0.05, 0.01, and 0.001 levels, respectively. If missForest performs better, hash symbols (‘#’, ‘##’, ‘###’) are used instead. The results are stored in a summary table.
 
 ```{r message=FALSE, warning=FALSE}
 summary_df <- data.frame()
