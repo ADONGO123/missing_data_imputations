@@ -3237,16 +3237,23 @@ function to compute the Normalized Root Mean Squared Error (NRMSE).</p>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>nrmse <span class="ot">&lt;-</span> <span class="cf">function</span>(imputed, original, mask) {</span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">mean</span>((imputed[mask] <span class="sc">-</span> original[mask])<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">/</span> <span class="fu">sd</span>(original[mask])</span>
 <span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>}</span></code></pre></div>
+<p>The code below loads the saved simulation results for each dataset
+from <code>.rds</code> files, allowing the analysis to continue without
+re-running the full simulations, which take approximately two and a half
+hours. The simulations were run once and the results were saved to disk
+using <code>saveRDS()</code>. This approach ensures consistency and
+saves time whenever the document is re-knitted and ensures we get the
+same results anytime we knit.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>results_list <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_fitbit_cont.rds&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>results_list2 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_cont.rds&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>results_list3 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_mixed.rds&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>results_list_cat <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_cat.rds&quot;</span>)</span></code></pre></div>
 <p>The codes below compare the imputation performance of
 <strong>KNN</strong> and <strong>missForest</strong> across 50
 repetitions and 3 levels of missingness (10%, 20%, 30%). For each
 repetition, it introduces missing values using
 <code>dat_missing()</code>, imputes them using both methods, and stores
 the Normalized Root Mean Squared Error (NRMSE) results in a list.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>results_list <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_fitbit_cont.rds&quot;</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>results_list2 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_cont.rds&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>results_list3 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_mixed.rds&quot;</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>results_list_cat <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;results/results_habit_cat.rds&quot;</span>)</span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># library(VIM)</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># library(missForest)</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co"># library(missForestPredict)</span></span>

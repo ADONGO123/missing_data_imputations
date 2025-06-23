@@ -292,7 +292,7 @@ nrmse <- function(imputed, original, mask) {
   sqrt(mean((imputed[mask] - original[mask])^2)) / sd(original[mask])
 }
 ```
-The codes below compare the imputation performance of **KNN** and **missForest** across 50 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
+The code below loads the saved simulation results for each dataset from `.rds` files, allowing the analysis to continue without re-running the full simulations, which take approximately two and a half hours. The simulations were run once and the results were saved to disk using `saveRDS()`. This approach ensures consistency and saves time whenever the document is re-knitted and ensures we get the same results anytime we knit.
 
 ```{r load-results, message=FALSE, warning=FALSE}
 results_list <- readRDS("results/results_fitbit_cont.rds")
@@ -300,6 +300,7 @@ results_list2 <- readRDS("results/results_habit_cont.rds")
 results_list3 <- readRDS("results/results_habit_mixed.rds")
 results_list_cat <- readRDS("results/results_habit_cat.rds")
 ```
+The codes below compare the imputation performance of **KNN** and **missForest** across 50 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
 
 ```{r, message=FALSE, warning=FALSE}
 # library(VIM)
