@@ -256,13 +256,19 @@ We look at continuous variables first. The two data sets below are obtained from
 ```{r, message=FALSE, warning=FALSE}
 library(readr)
 Habit <- read.csv("Datasets/Student_Habits.csv") #reading data
-Habit <- Habit[, -c(1,3,7,10,12,13,15)] #removing all categorical variables
-head(Habit)
+cols_to_factor <- c(3, 7, 10,12, 13, 15)
+Habit[cols_to_factor] <- lapply(Habit[cols_to_factor], as.factor)
+
+Habit_Cont <- Habit[, -c(1,3,7,10,12,13,15)] #removing all categorical variables
+
+head(Habit_Cont)
 Fitbit <- read.csv("Datasets/dailyActivity_merged.csv")
-Fitbit <- Fitbit[,-c(1,2)]
-head(Fitbit)
+
+Fitbit_Cont <- Fitbit[,-c(1,2)]
+head(Fitbit_Cont)
 
 ```
+
 ## Fitbit Data
 We write a function that generates versions of a dataset with 10%, 20%, and 30% missing values by applying the `produce_NA()` function at each level and store the results in a list. We also write a function to compute the NRMSE.
 
@@ -287,47 +293,55 @@ nrmse <- function(imputed, original, mask) {
 ```
 The codes below compare the imputation performance of **KNN** and **missForest** across 100 repetitions and 3 levels of missingness (10%, 20%, 30%). For each repetition, it introduces missing values using `dat_missing()`, imputes them using both methods, and stores the Normalized Root Mean Squared Error (NRMSE) results in a list.
 
+```{r load-results, message=FALSE, warning=FALSE}
+results_list <- readRDS("results/results_fitbit_cont.rds")
+results_list2 <- readRDS("results/results_habit_cont.rds")
+results_list3 <- readRDS("results/results_habit_mixed.rds")
+results_list_cat <- readRDS("results/results_habit_cat.rds")
+```
+
 ```{r, message=FALSE, warning=FALSE}
-library(VIM)
-library(missForest)
-library(missForestPredict)
-set.seed(2025)
-reps <- 100
-missingLevels <- c(0.1, 0.2, 0.3)
-methods <- c("KNN", "missForest")
-
-results_list <- list()
-
-for (level in missingLevels) {
-  
-  rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
-  colnames(rep_results) <- methods
-  
-  for (r in 1:reps) {
-    
-    # Generate  NAs
-    data_missing_list <- dat_missing(Fitbit)
-    data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
-    mask <- is.na(data_miss)
-    
-    # KNN
-    knn_out <- kNN(data_miss, k = ncol(data_miss)/2)
-    # get imputed data
-    knn_imp <- knn_out[, 1:13]
-    rep_results[r, "KNN"] <- nrmse(knn_imp,Fitbit,is.na(data_miss))
-    
-    # missForest
-    mf_try <- missForest(data_miss, verbose = F)
-      rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Fitbit,mask)
-  }
-  results_list[[paste0("missing_", level * 100)]] <- rep_results
-}
+# library(VIM)
+# library(missForest)
+# library(missForestPredict)
+# set.seed(2025)
+# reps <- 50
+# missingLevels <- c(0.1, 0.2, 0.3)
+ methods <- c("KNN", "missForest")
+# 
+# results_list <- list()
+# 
+# for (level in missingLevels) {
+#   
+#   rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
+#   colnames(rep_results) <- methods
+#   
+#   for (r in 1:reps) {
+#     set.seed(2025 + r + level * 1000)
+#     # Generate  NAs
+#     data_missing_list <- dat_missing(Fitbit_Cont)
+#     data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+#     mask <- is.na(data_miss)
+#     
+#     # KNN
+#     knn_out <- kNN(data_miss, k = ncol(data_miss)/2)
+#     # get imputed data
+#     knn_imp <- knn_out[, 1:13]
+#     rep_results[r, "KNN"] <- nrmse(knn_imp,Fitbit_Cont,is.na(data_miss))
+#     
+#     # missForest
+#     mf_try <- missForest(data_miss, verbose = F)
+#       rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Fitbit_Cont,mask)
+#   }
+#   results_list[[paste0("missing_", level * 100)]] <- rep_results
+# }
+# saveRDS(results_list, "results/results_fitbit_cont.rds")
 
 ```
 
 The code below, finally compares the imputation performance of **KNN** and **missForest** across the three levels of missingness (10%, 20%, and 30%) using the average Normalized Root Mean Squared Error (**NRMSE**) from repeated simulations (100). For each method and missingness level, it computes the mean NRMSE and standard error, then performs a paired Wilcoxon signed-rank test to evaluate whether the difference in performance is statistically significant. If missForest outperforms KNN, asterisks (‘*’, ‘**’, ‘***’) are added to indicate significance at the 0.05, 0.01, and 0.001 levels, respectively. If KNN performs better, hash symbols (‘#’, ‘##’, ‘###’) are used instead. The results are stored in a summary table for interpretation and visualization.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 summary_df <- data.frame()
 
 for (name in names(results_list)) {
@@ -369,39 +383,43 @@ for (lvl in unique(summary_df$MissingLevel)) {
 
 print(summary_df)
 ```
-Across all three levels of missingness (10%, 20%, and 30%), **missForest consistently outperforms KNN** in terms of imputation accuracy, as measured by the Normalized Root Mean Squared Error (**NRMSE**). At 10% missingness, the average NRMSE for missForest is 0.09696, compared to 0.30411 for KNN. As the level of missing data increases, the performance gap widens: at 20%, missForest achieves 0.10498 while KNN reaches 0.40751; and at 30%, missForest records 0.12153 versus 0.47084 for KNN. Paired Wilcoxon signed-rank tests were performed to assess the statistical significance of these differences. The results indicate that **KNN performs significantly worse than missForest at every level**, with p-values less than 0.001, denoted by the `###` symbol. This consistent and statistically significant advantage demonstrates that **missForest is not only more accurate but also more robust** to increasing amounts of missing data.
+Across all three levels of missingness (10%, 20%, and 30%), **missForest consistently outperforms KNN** in terms of imputation accuracy, as measured by the **Normalized Root Mean Squared Error (NRMSE)**. At 10% missingness, missForest achieves an average NRMSE of **0.10325**, while KNN yields a much higher value of **0.29998**. This trend continues as the proportion of missing data increases: at 20%, missForest maintains a low error of **0.10535** compared to **0.39477** for KNN; and at 30%, missForest records **0.12409**, whereas KNN rises to **0.46118**.
+
+Paired **Wilcoxon signed-rank tests** reveal that these differences are **highly statistically significant** at every level of missingness, with **p-values less than 0.001**, denoted by the `###` symbols next to KNN. These results highlight that **missForest is not only more accurate but also more robust** than KNN as the amount of missing data increases.
+
 
 
 ## Habit Dataset
 
-```{r}
-results_list2 <- list()
-
-for (level in missingLevels) {
-  
-  rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
-  colnames(rep_results) <- methods
-  
-  for (r in 1:reps) {
-    
-    # Generate  NAs
-    data_missing_list <- dat_missing(Habit)
-    data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
-    mask <- is.na(data_miss)
-    
-    # KNN
-    knn_out <- kNN(data_miss, k = 5)
-    # get imputed data
-    knn_imp <- knn_out[, 1:9]
-    rep_results[r, "KNN"] <- nrmse(knn_imp,Habit,is.na(data_miss))
-    
-    # missForest
-    mf_try <- missForest(data_miss, verbose = F)
-      rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Habit,mask)
-  }
-  results_list2[[paste0("missing_", level * 100)]] <- rep_results
-}
-
+```{r message=FALSE, warning=FALSE}
+# results_list2 <- list()
+# 
+# for (level in missingLevels) {
+#   
+#   rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
+#   colnames(rep_results) <- methods
+#   
+#   for (r in 1:reps) {
+#     
+#     # Generate  NAs
+#     data_missing_list <- dat_missing(Habit_Cont)
+#     data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+#     mask <- is.na(data_miss)
+#     
+#     # KNN
+#     knn_out <- kNN(data_miss, k = 5)
+#     # get imputed data
+#     knn_imp <- knn_out[, 1:9]
+#     rep_results[r, "KNN"] <- nrmse(knn_imp,Habit_Cont,is.na(data_miss))
+#     
+#     # missForest
+#     mf_try <- missForest(data_miss, verbose = F)
+#       rep_results[r, "missForest"] <-nrmse(mf_try$ximp,Habit_Cont,mask)
+#   }
+#   results_list2[[paste0("missing_", level * 100)]] <- rep_results
+# }
+# 
+# saveRDS(results_list2, "results/results_habit_cont.rds")
 summary_df2 <- data.frame()
 
 for (name in names(results_list2)) {
@@ -443,9 +461,209 @@ for (lvl in unique(summary_df2$MissingLevel)) {
 
 print(summary_df2)
 ```
-For the **Student Habits vs Academic Performance** dataset, missForest again consistently outperforms KNN across all three missingness levels (10%, 20%, and 30%) in terms of lower Normalized Root Mean Squared Error (NRMSE). At 10% missingness, missForest achieves an average NRMSE of 0.15086, compared to 0.18508 for KNN. This performance gap remains stable as missingness increases: at 20%, missForest records 0.16474 while KNN rises to 0.19712, and at 30%, missForest reaches 0.17642 compared to 0.20646 for KNN.
+For the **Student Habits vs Academic Performance** dataset, **missForest again consistently outperforms KNN** across all three missingness levels (10%, 20%, and 30%) in terms of lower **Normalized Root Mean Squared Error (NRMSE)**. At 10% missingness, missForest achieves an average NRMSE of **0.15049**, compared to **0.18503** for KNN. As the missingness increases, the performance gap remains evident: at 20%, missForest records **0.16332**, while KNN rises to **0.19550**; and at 30%, missForest reaches **0.17681**, compared to **0.20758** for KNN.
 
-Paired Wilcoxon signed-rank tests show that the differences are **highly statistically significant** at every level of missingness, as indicated by the `###` symbols for KNN (corresponding to \( p < 0.001 \)). These results confirm that missForest provides a more accurate and statistically robust imputation approach than KNN for this dataset, even as the proportion of missing data increases.
+Paired **Wilcoxon signed-rank tests** show that the differences are **highly statistically significant** at every level of missingness, as indicated by the `###` symbols for KNN (corresponding to \( p < 0.001 \)). These results confirm that **missForest provides a more accurate and statistically robust imputation approach than KNN** for this dataset, even as the proportion of missing data increases.
+
+
+## Mixed-type data 
+The same data set Habit is used with the categorical variables included.
+
+```{r message=FALSE, warning=FALSE}
+Habit_Mixed <- Habit[,-1]
+
+cont_vars <- sapply(Habit_Mixed, is.numeric)
+cat_vars <- sapply(Habit_Mixed, is.factor)
+
+# Initialize results list
+# results_list3 <- list()
+# for (level in missingLevels) {
+#   rep_results <- matrix(NA, nrow = reps, ncol = length(methods) * 2)  # NRMSE + PFC per method
+#   colnames(rep_results) <- c("KNN_NRMSE", "KNN_PFC", "missForest_NRMSE", "missForest_PFC")
+#   
+#   for (r in 1:reps) {
+#     # Generate missing data
+#     data_missing_list <- dat_missing(Habit_Mixed)
+#     data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+#     mask <- is.na(data_miss)
+#     
+#     # --- KNN ---
+#     knn_out <- kNN(data_miss, k = 5)
+#     knn_imp <- knn_out[, 1:15]  # Ensure proper column names
+# 
+#     rep_results[r, "KNN_NRMSE"] <- nrmse(
+#       knn_imp[, cont_vars], Habit_Mixed[, cont_vars], is.na(data_miss[, cont_vars])
+#     )
+#     rep_results[r, "KNN_PFC"] <- pfc(
+#       knn_imp[, cat_vars], Habit_Mixed[, cat_vars], is.na(data_miss[, cat_vars])
+#     )
+#     
+#     # --- missForest ---
+#     mf_out <- missForest(data_miss, verbose = FALSE)
+#     mf_imp <- mf_out$ximp
+# 
+#     rep_results[r, "missForest_NRMSE"] <- nrmse(
+#       mf_imp[, cont_vars], Habit_Mixed[, cont_vars], is.na(data_miss[, cont_vars])
+#     )
+#     rep_results[r, "missForest_PFC"] <- pfc(
+#       mf_imp[, cat_vars], Habit_Mixed[, cat_vars], is.na(data_miss[, cat_vars])
+#     )
+#   }
+#   
+#   results_list3[[paste0("missing_", level * 100)]] <- rep_results
+# }
+# 
+# saveRDS(results_list3, "results/results_habit_mixed.rds")
+summary_df3 <- data.frame()
+
+for (name in names(results_list3)) {
+  res <- results_list3[[name]]
+  level <- gsub("missing_", "", name)
+  
+  for (metric in c("NRMSE", "PFC")) {
+    for (method in methods) {
+      colname <- paste0(method, "_", metric)
+      method_data <- res[, colname]
+      method_data <- method_data[!is.na(method_data)]
+      
+      avg <- mean(method_data)
+      se <- sd(method_data) / sqrt(length(method_data))
+      
+      summary_df3 <- rbind(summary_df3, data.frame(
+        MissingLevel = paste0(level, "%"),
+        Method = method,
+        Metric = metric,
+        Mean = round(avg, 5),
+        SE = round(se, 5),
+        Signif = ""
+      ))
+    }
+  }
+}
+
+for (lvl in unique(summary_df3$MissingLevel)) {
+  res <- results_list3[[paste0("missing_", gsub("%", "", lvl))]]
+  
+  # NRMSE comparison
+  if (all(!is.na(res[, "KNN_NRMSE"])) && all(!is.na(res[, "missForest_NRMSE"]))) {
+    p_val <- wilcox.test(res[, "missForest_NRMSE"], res[, "KNN_NRMSE"], paired = TRUE)$p.value
+    signif <- if (mean(res[, "KNN_NRMSE"]) > mean(res[, "missForest_NRMSE"])) {
+      if (p_val < 0.001) "###" else if (p_val < 0.01) "##" else if (p_val < 0.05) "#" else ""
+    } else {
+      if (p_val < 0.001) "***" else if (p_val < 0.01) "**" else if (p_val < 0.05) "*" else ""
+    }
+    summary_df3$Signif[summary_df3$MissingLevel == lvl & summary_df3$Method == "KNN" & summary_df3$Metric == "NRMSE"] <- signif
+  }
+
+  # PFC comparison
+  if (all(!is.na(res[, "KNN_PFC"])) && all(!is.na(res[, "missForest_PFC"]))) {
+    p_val <- wilcox.test(res[, "missForest_PFC"], res[, "KNN_PFC"], paired = TRUE)$p.value
+    signif <- if (mean(res[, "KNN_PFC"]) > mean(res[, "missForest_PFC"])) {
+      if (p_val < 0.001) "###" else if (p_val < 0.01) "##" else if (p_val < 0.05) "#" else ""
+    } else {
+      if (p_val < 0.001) "***" else if (p_val < 0.01) "**" else if (p_val < 0.05) "*" else ""
+    }
+    summary_df3$Signif[summary_df3$MissingLevel == lvl & summary_df3$Method == "KNN" & summary_df3$Metric == "PFC"] <- signif
+  }
+}
+
+print(summary_df3)
+
+```
+For the **mixed-type version** of the *Student Habits vs Academic Performance* dataset, **missForest consistently outperforms KNN** across all three missingness levels (10%, 20%, and 30%) in terms of both imputation accuracy for continuous variables and classification accuracy for categorical variables.
+
+At 10% missingness, missForest achieves an average NRMSE of **0.15207**, while KNN records **0.21567**. We see the similar results for 20% and 30% missingness.
+
+Similarly, for **categorical variables**, evaluated using the **Proportion of Falsely Classified (PFC)** entries, missForest again yields better performance. At 10% missingness, missForest achieves a PFC of **0.47867**, while KNN reaches **0.51540**. This pattern remains consistent at higher missingness levels: missForest maintains lower PFC values of **0.48280** and **0.48004**, compared to **0.51267** and **0.51172** for KNN at 20% and 30%, respectively.
+
+Paired **Wilcoxon signed-rank tests** confirm that these differences are **highly statistically significant** (\( p < 0.001 \)) for both NRMSE and PFC at all levels of missingness, as indicated by the `###` symbols for KNN. These findings demonstrate that **missForest provides a more accurate and reliable imputation strategy** than KNN for this datasets with a mix of variable types, especially as the proportion of missing data increases.
+
+
+## Categorical Variables Only
+With the same data set Habits, we select just the categorical variables. 
+
+```{r message=FALSE, warning=FALSE}
+Habit_Cat <- Habit_Mixed[, cat_vars]
+# results_list_cat <- list()
+# 
+# for (level in missingLevels) {
+#   rep_results <- matrix(NA, nrow = reps, ncol = length(methods))
+#   colnames(rep_results) <- methods
+#   
+#   for (r in 1:reps) {
+#     # Generate missing data
+#     data_missing_list <- dat_missing(Habit_Cat)  # replace with your categorical-only dataset
+#     data_miss <- data_missing_list[[paste0("missing_", level * 100)]]
+#     mask <- is.na(data_miss)
+#     
+#     # --- KNN ---
+#     knn_out <- kNN(data_miss, k = 5)
+#     knn_imp <- knn_out[, names(Habit_Cat)]  # retain original structure
+#     rep_results[r, "KNN"] <- pfc(knn_imp, Habit_Cat, mask)
+#     
+#     # --- missForest ---
+#     mf_out <- missForest(data_miss, verbose = FALSE)
+#     mf_imp <- mf_out$ximp
+#     rep_results[r, "missForest"] <- pfc(mf_imp, Habit_Cat, mask)
+#   }
+#   
+#   results_list_cat[[paste0("missing_", level * 100)]] <- rep_results
+# }
+# 
+# saveRDS(results_list_cat, "results/results_habit_cat.rds")
+summary_df_cat <- data.frame()
+
+for (name in names(results_list_cat)) {
+  res <- results_list_cat[[name]]
+  level <- gsub("missing_", "", name)
+  
+  for (method in methods) {
+    method_data <- res[, method]
+    method_data <- method_data[!is.na(method_data)]
+    
+    avg <- mean(method_data)
+    se <- sd(method_data) / sqrt(length(method_data))
+    
+    summary_df_cat <- rbind(summary_df_cat, data.frame(
+      MissingLevel = paste0(level, "%"),
+      Method = method,
+      Metric = "PFC",
+      Mean = round(avg, 5),
+      SE = round(se, 5),
+      Signif = ""
+    ))
+  }
+}
+
+for (lvl in unique(summary_df_cat$MissingLevel)) {
+  res <- results_list_cat[[paste0("missing_", gsub("%", "", lvl))]]
+  
+  if (all(!is.na(res[, "KNN"])) && all(!is.na(res[, "missForest"]))) {
+    p_val <- wilcox.test(res[, "missForest"], res[, "KNN"], paired = TRUE)$p.value
+    signif <- if (mean(res[, "KNN"]) > mean(res[, "missForest"])) {
+      if (p_val < 0.001) "###" else if (p_val < 0.01) "##" else if (p_val < 0.05) "#" else ""
+    } else {
+      if (p_val < 0.001) "***" else if (p_val < 0.01) "**" else if (p_val < 0.05) "*" else ""
+    }
+    summary_df_cat$Signif[summary_df_cat$MissingLevel == lvl & summary_df_cat$Method == "KNN"] <- signif
+  }
+}
+
+print(summary_df_cat)
+
+```
+
+Across all levels of missingness (10%, 20%, and 30%), **missForest outperforms KNN**, consistently yielding lower classification error rates.
+
+At 10% missingness, missForest achieves a PFC of **0.47187**, whereas KNN records a higher value of **0.51663**. As missingness increases, the performance gap persists: at 20%, missForest yields **0.48937**, compared to **0.52158** for KNN; and at 30%, missForest maintains a lower PFC of **0.48987**, while KNN reaches **0.52161**.
+
+These differences are confirmed by paired **Wilcoxon signed-rank tests**, which show **highly statistically significant results** in favor of missForest at every level of missingness (\( p < 0.001 \)), indicated by the `###` symbols for KNN. These results demonstrate that **missForest is more effective and consistent** than KNN when imputing categorical data, particularly as the proportion of missing values increases.
+
+
+
+## Conclusion
+
+Across all experiments, **missForest consistently outperformed KNN** in terms of imputation accuracy. It achieved lower NRMSE for continuous variables and lower PFC for categorical variables across all levels of missingness. The differences were statistically significant in nearly all cases. Overall, **missForest proved to be a more reliable and robust method** for handling missing data, especially as missingness increased or when working with mixed data types.
 
 
 #References
